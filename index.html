@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Philosophy & GST Revision Quiz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revision Quiz - One at a Time</title>
 <style>
   :root {
     --bg: #1b1f1a;
@@ -21,9 +22,12 @@
     color: var(--ink);
     font-family: Georgia, 'Times New Roman', serif;
     line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
   header {
-    padding: 32px 20px 20px;
+    padding: 24px 20px 14px;
     text-align: center;
     border-bottom: 1px solid var(--line);
   }
@@ -31,23 +35,42 @@
     font-family: 'Trebuchet MS', Tahoma, sans-serif;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     color: var(--accent);
-    margin: 0 0 6px;
+    margin: 0 0 8px;
   }
-  header p { color: var(--muted); margin: 0; font-size: 0.95rem; }
-
-  #quiz-form {
-    max-width: 760px;
+  .progress-wrap {
+    max-width: 560px;
     margin: 0 auto;
-    padding: 24px 20px 100px;
   }
+  .progress-bar-track {
+    height: 6px;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  #progress-text { color: var(--muted); font-size: 0.85rem; }
+
+  main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 24px 20px 40px;
+  }
+  #quiz-container { width: 100%; max-width: 620px; }
+
   .question-card {
     background: var(--panel);
     border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 18px 20px;
-    margin-bottom: 14px;
+    border-radius: 8px;
+    padding: 22px 24px;
   }
   .q-index {
     font-family: 'Trebuchet MS', Tahoma, sans-serif;
@@ -55,352 +78,250 @@
     letter-spacing: 0.08em;
     color: var(--accent);
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
   }
-  .q-text { font-size: 1.05rem; margin-bottom: 12px; }
+  .q-text { font-size: 1.15rem; margin-bottom: 18px; }
   .option {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    padding: 7px 10px;
-    border-radius: 4px;
+    padding: 10px 12px;
+    border-radius: 6px;
     cursor: pointer;
-    border: 1px solid transparent;
+    border: 1px solid var(--line);
+    margin-bottom: 8px;
+    transition: background 0.15s, border-color 0.15s;
   }
   .option:hover { background: rgba(255,255,255,0.03); }
   .option input { margin-top: 4px; }
-  .option.correct { border-color: var(--good); background: rgba(111,174,124,0.12); }
-  .option.incorrect { border-color: var(--bad); background: rgba(201,107,75,0.14); }
+  .option.correct { border-color: var(--good); background: rgba(111,174,124,0.14); }
+  .option.incorrect { border-color: var(--bad); background: rgba(201,107,75,0.16); }
+  .option.locked { cursor: default; }
 
-  .toolbar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: var(--panel);
-    border-top: 1px solid var(--line);
-    padding: 14px 20px;
+  .feedback {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,0.02);
+  }
+  .feedback.show { display: block; }
+  .feedback-title {
+    font-family: 'Trebuchet MS', Tahoma, sans-serif;
+    font-weight: bold;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+  .feedback-title.correct { color: var(--good); }
+  .feedback-title.incorrect { color: var(--bad); }
+  .feedback-body { color: var(--ink); font-size: 0.95rem; }
+
+  .actions {
+    margin-top: 20px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
+    justify-content: flex-end;
+    gap: 10px;
   }
   button {
     font-family: 'Trebuchet MS', Tahoma, sans-serif;
     background: var(--accent);
     color: #1b1f1a;
     border: none;
-    padding: 11px 26px;
-    border-radius: 4px;
-    font-size: 0.95rem;
+    padding: 11px 24px;
+    border-radius: 5px;
+    font-size: 0.9rem;
     font-weight: bold;
     cursor: pointer;
     letter-spacing: 0.03em;
   }
   button:hover { filter: brightness(1.08); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
   button.secondary {
     background: transparent;
     color: var(--ink);
     border: 1px solid var(--line);
   }
-  #progress { color: var(--muted); font-size: 0.9rem; }
 
-  #result-banner {
-    display: none;
-    max-width: 760px;
-    margin: 20px auto 0;
-    padding: 18px 22px;
-    border-radius: 6px;
-    border: 1px solid var(--accent);
-    background: rgba(201,162,75,0.1);
-    text-align: center;
-  }
-  #result-banner h2 {
-    margin: 0 0 4px;
+  #final-screen { display: none; text-align: center; }
+  #final-screen .question-card { padding: 40px 30px; }
+  #final-score {
     font-family: 'Trebuchet MS', Tahoma, sans-serif;
+    font-size: 2rem;
     color: var(--accent);
+    margin-bottom: 6px;
   }
-  #result-banner p { margin: 0; color: var(--muted); }
-
-  .unanswered-flag {
-    color: var(--bad);
-    font-size: 0.8rem;
-    margin-left: 6px;
-  }
+  #final-sub { color: var(--muted); margin-bottom: 24px; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>Revision Quiz</h1>
-  <p id="progress">0 of 139 answered</p>
+  <div class="progress-wrap">
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    <div id="progress-text">Question 1 of 139</div>
+  </div>
 </header>
 
-<div id="result-banner">
-  <h2 id="score-line"></h2>
-  <p id="score-sub"></p>
-</div>
+<main>
+  <div id="quiz-container">
+    <div class="question-card" id="question-card">
+      <div class="q-index" id="q-index"></div>
+      <div class="q-text" id="q-text"></div>
+      <div id="options-list"></div>
+      <div class="feedback" id="feedback">
+        <div class="feedback-title" id="feedback-title"></div>
+        <div class="feedback-body" id="feedback-body"></div>
+      </div>
+      <div class="actions">
+        <button type="button" class="secondary" id="check-btn">Check Answer</button>
+        <button type="button" id="next-btn" style="display:none;">Next Question</button>
+      </div>
+    </div>
 
-<form id="quiz-form"></form>
-
-<div class="toolbar">
-  <button type="button" class="secondary" id="reset-btn">Reset</button>
-  <button type="button" id="submit-btn">Submit &amp; Grade</button>
-</div>
+    <div class="question-card" id="final-screen">
+      <div id="final-score"></div>
+      <div id="final-sub"></div>
+      <button type="button" id="restart-btn">Restart Quiz</button>
+    </div>
+  </div>
+</main>
 
 <script>
-// Each item: q (question text), options (array), answer (0-based index of correct option)
-const QUESTIONS = [
-{q:"Which of these is a movement of the contemporary period?",options:["Neo Idealism","Positivism","Phenomenology","All of the above"],answer:3},
-{q:"According to Thales, the primordial substance is",options:["Water","Fire","Earth","Aperion"],answer:0},
-{q:"According to ... revolution, the sun is the centre of the universe.",options:["Greek","Marxist","All of the above","Ptolemaic","Copernican"],answer:4},
-{q:"Which of the following is a Socratic philosopher",options:["Plato","Anaximander","Plotinus","Pythagoras"],answer:0},
-{q:"Which of these can stand as a definition of philosophy?",options:["It is the science of the laws of thought","None of the above","It is the study of the nature of reality, the nature of knowledge and human actions","It is the science of reasoning"],answer:2},
-{q:"Philosophers in the medieval period include the following except?",options:["Aristotle","Aquinas","Augustine","John Scotus"],answer:0},
-{q:"Modern philosophers were able to drive philosophy to the field of",options:["Science","Technology","Religion","Art"],answer:0},
-{q:"According to the Bolton Committee, a small business is expected to satisfy three criteria, excluding _____",options:["independence","market influence","personal influence","community support"],answer:3},
-{q:"Which of these philosophers lived in the medieval period",options:["Al-Farabi","All of the above","Don Scotus","Augustine"],answer:1},
-{q:"Which of the following is a pre-Socratic philosopher?",options:["Socrates","Heraclitus","Moore","J. S. Mill"],answer:1},
+const QUESTIONS = [{"q": "Which of these is a movement of the contemporary period?", "options": ["Neo Idealism", "Positivism", "Phenomenology", "All of the above"], "answer": 3, "explanation": "Neo Idealism, Positivism, and Phenomenology are all philosophical movements associated with the contemporary period."}, {"q": "According to Thales, the primordial substance is", "options": ["Water", "Fire", "Earth", "Aperion"], "answer": 0, "explanation": "Thales held water as the arche - the primordial substance underlying all things."}, {"q": "According to ... revolution, the sun is the centre of the universe.", "options": ["Greek", "Marxist", "All of the above", "Ptolemaic", "Copernican"], "answer": 4, "explanation": "The Copernican revolution proposed a heliocentric model with the sun at the centre of the universe."}, {"q": "Which of the following is a Socratic philosopher", "options": ["Plato", "Anaximander", "Plotinus", "Pythagoras"], "answer": 0, "explanation": "Plato was Socrates' most famous student and direct heir to his teachings."}, {"q": "Which of these can stand as a definition of philosophy?", "options": ["It is the science of the laws of thought", "None of the above", "It is the study of the nature of reality, the nature of knowledge and human actions", "It is the science of reasoning"], "answer": 2, "explanation": "This captures the core scope of philosophy: reality (metaphysics), knowledge (epistemology), and human action (ethics)."}, {"q": "Philosophers in the medieval period include the following except?", "options": ["Aristotle", "Aquinas", "Augustine", "John Scotus"], "answer": 0, "explanation": "Aristotle lived in ancient Greece (4th century BC), long before the medieval period."}, {"q": "Modern philosophers were able to drive philosophy to the field of", "options": ["Science", "Technology", "Religion", "Art"], "answer": 0, "explanation": "Modern philosophy (Descartes, Bacon, etc.) is closely tied to the rise of the scientific method."}, {"q": "According to the Bolton Committee, a small business is expected to satisfy three criteria, excluding _____", "options": ["independence", "market influence", "personal influence", "community support"], "answer": 3, "explanation": "The Bolton Committee's criteria were independence, small market share, and personal management by owners - not community support."}, {"q": "Which of these philosophers lived in the medieval period", "options": ["Al-Farabi", "All of the above", "Don Scotus", "Augustine"], "answer": 1, "explanation": "Al-Farabi, Duns Scotus, and Augustine all lived and wrote during the medieval period."}, {"q": "Which of the following is a pre-Socratic philosopher?", "options": ["Socrates", "Heraclitus", "Moore", "J. S. Mill"], "answer": 1, "explanation": "Heraclitus predates Socrates, making him a pre-Socratic philosopher."}, {"q": "Plato sees knowledge as .....................", "options": ["idea", "scientific", "matter", "uncritical thought"], "answer": 0, "explanation": "For Plato, true knowledge is knowledge of the Forms/Ideas, not the shifting physical world."}, {"q": "Instead of printing the first two pages, a clerk mistakenly printed the entire 20-page document. What precaution(s) can you suggest?", "options": ["She should have placed only 2 pieces of paper in the tray, and specified desired pages under Settings in Print Preview", "She could have selected the required portion and printed using the selection option, and specified desired pages under Settings in Print Preview", "She could have specified the desired pages under Settings in Print Preview", "She should have placed only 2 pieces of paper in the printer's tray", "She could have selected the required portion and printed using selection option"], "answer": 1, "explanation": "Selecting only the needed pages (via selection option or page-range settings) would have prevented printing the whole document."}, {"q": "Plato is a", "options": ["Fallacy of denial", "Rule of Inference", "German philosopher", "Greek philosopher"], "answer": 3, "explanation": "Plato was a Greek philosopher, a student of Socrates."}, {"q": "One of the following does not encourage corruption in Nigeria ..........", "options": ["Transparent allocation of resources", "Weak and ineffective institutions", "A corrupt judiciary", "Lack of basic necessities of life"], "answer": 0, "explanation": "Transparent allocation of resources reduces opportunities for corrupt practices, unlike the other options."}, {"q": "Philosophers in the medieval period include the following except?", "options": ["Aquinas", "John Scotus", "Augustine", "Aristotle"], "answer": 3, "explanation": "Aristotle was an ancient Greek philosopher, not a medieval one."}, {"q": "Professional academic metaphysics, strictly speaking, is", "options": ["Phenomenology", "Scientology", "Ontology", "Science"], "answer": 2, "explanation": "Ontology, the study of being, is what 'metaphysics' strictly and technically refers to in academic philosophy."}, {"q": "One of the following is an example of a word processing application", "options": ["Oracle", "Microsoft Word", "Microsoft Excel", "Microsoft Access"], "answer": 1, "explanation": "Microsoft Word is a word processing application; Excel is a spreadsheet and Access a database tool."}, {"q": "Formatting a document or text means", "options": ["Proofreading the document", "Switching the input method", "Presenting misleading information to cover up errors", "Changing the default setting to suit own purpose", "Translating a text into another language"], "answer": 3, "explanation": "Formatting means adjusting a document's settings (fonts, layout, spacing, etc.) to suit one's own purpose."}, {"q": "For the materialist school, reality is reduced only to", "options": ["Material clothes", "Ideologies", "None of the above", "Matter"], "answer": 3, "explanation": "Materialism holds that reality is ultimately reducible to matter."}, {"q": "Microphone is an example of", "options": ["Output device", "None of the options", "Input device", "Storage device"], "answer": 2, "explanation": "A microphone captures sound into the system, making it an input device."}, {"q": "A Proposition is", "options": ["None of the above", "An interrogative sentence", "An exclamatory statement", "A redundant"], "answer": 0, "explanation": "A proposition is a declarative statement that can be true or false - none of the listed sentence types fit that definition."}, {"q": "When philosophy investigates other disciplines or areas of study, it is usually concerned with", "options": ["The ground of the disciplines", "A and B", "The area of study in question", "B alone"], "answer": 0, "explanation": "When philosophy examines another discipline, it looks at that discipline's foundational assumptions - its 'ground.'"}, {"q": "The study of being is known as", "options": ["Cosmogony", "Metaphysics", "Cosmology", "Ontology"], "answer": 3, "explanation": "Ontology is defined as the study of being."}, {"q": "According to ............ love and strife are principles of reality", "options": ["None of the above", "Thales", "Plato", "Anaximander"], "answer": 0, "explanation": "This idea belongs to Empedocles, who isn't among the listed options, so 'none of the above' is correct."}, {"q": "According to Parmenides, ultimate reality is", "options": ["air", "water", "fire", "none of the above"], "answer": 3, "explanation": "Parmenides argued ultimate reality is unchanging Being, not any physical element like air, water, or fire."}, {"q": "A posteriori can be traced to", "options": ["sophist", "rationalist", "empiricist", "existentialist"], "answer": 2, "explanation": "A posteriori knowledge comes from sense experience, the hallmark of empiricism."}, {"q": "According to ............... man is condemned to be free", "options": ["Moralists", "Existentialists", "Ontologists", "Phenomenalists"], "answer": 1, "explanation": "This famous phrase comes from Sartre, an existentialist."}, {"q": "According to ................ reality is always changing", "options": ["Anaximander", "Heraclitus", "Empedocles", "Thales"], "answer": 1, "explanation": "Heraclitus is famous for the doctrine that everything is in flux - 'you cannot step in the same river twice.'"}, {"q": "According to Aristotelian logic, inductive arguments move from", "options": ["Particular premises to particular conclusion", "General premises to particular conclusion", "Particular conclusion to particular premise", "None of the above"], "answer": 3, "explanation": "Proper induction moves from particular premises to a general conclusion - an option missing here, hence 'none of the above.'"}, {"q": "According to ................ knowledge is virtue", "options": ["Socrates", "Bertrand Husserl", "Bertrand Russell", "Albert Popkins"], "answer": 0, "explanation": "Socrates famously equated knowledge with virtue."}, {"q": "Aesthetics is derived from the Greek word....", "options": ["Hestikos", "Aesthetikos", "Aestemors", "None of the above"], "answer": 1, "explanation": "The word 'aesthetics' comes from the Greek 'aesthetikos,' relating to sense perception."}, {"q": "Bishop Berkeley belongs to the ............ school of thought", "options": ["Empiricism", "Marxism", "Idealism", "Materialism"], "answer": 2, "explanation": "Bishop Berkeley is known for subjective idealism - 'to be is to be perceived.'"}, {"q": "Benjamin Nnamdi Azikiwe argued that education should ......", "options": ["Be rejected in order to promote indigenous culture", "Be given only to the Igbos and the Nupe", "Be used only in the church and religious assemblies", "Be first point of reforms in post-war reconstruction in British West Africa"], "answer": 3, "explanation": "Azikiwe saw educational reform as central to rebuilding British West Africa after the war."}, {"q": "Corruption could be categorised as all except..........", "options": ["Judicial corruption", "Electoral corruption", "Megalomania", "Bureaucratic corruption"], "answer": 2, "explanation": "Megalomania is a personality trait, not a recognized category or type of institutional corruption."}, {"q": "Consider the following computer specification: 2GHZ, 4GB, 500GB HDD. The speed of the computer is?", "options": ["500GB HDD", "None of the options", "2GHZ", "4GB"], "answer": 2, "explanation": "GHz (gigahertz) measures processor clock speed."}, {"q": "Any device connected to a network and capable of receiving, sending and forwarding data is called", "options": ["Host", "Node", "Server", "None of the options", "workstation"], "answer": 1, "explanation": "A 'node' is any device connected to and communicating on a network."}, {"q": "Being qua being is the focus of ......................", "options": ["Metaphysics", "Phenomenology", "Epistemology", "Ethics"], "answer": 0, "explanation": "Aristotle defined metaphysics as the study of 'being qua being.'"}, {"q": "All except one of the following were widespread in pre-jihad Hausaland.", "options": ["Religious polytheism", "The practice of venerating trees and rocks", "Christian missionary activities", "The practice of pouring libations on rocks"], "answer": 2, "explanation": "Christian missionary activity came later; the others were indigenous religious practices before the Sokoto jihad."}, {"q": "Arrange the following steps in order to set document margins: I. Click Page Layout Tab  II. Click the arrow at the lower right-end of the Page Setup Dialog box  III. Select the options (margins, orientation, etc.)  IV. Click Margins submenus  V. Click OK", "options": ["I, III, II, IV, V", "I, II, III, V, IV", "I, II, IV, III, V", "These steps are incomplete", "V, IV, III, I, II"], "answer": 2, "explanation": "You open Page Layout, then the Page Setup dialog launcher, then the Margins submenu, choose options, then click OK."}, {"q": "Due to financial misappropriations, Nigeria has not experienced ........", "options": ["Major volcanic eruption", "Poor education", "Maternal health crises", "Broken and dilapidated infrastructure"], "answer": 0, "explanation": "Volcanic eruptions are natural geological events unrelated to financial mismanagement, unlike the other socio-economic effects listed."}, {"q": "The processes or methods of inferential reasoning in logic include", "options": ["Mediate and Immediate", "Induction and deduction", "Simple and complex", "Conjunction and disjunction"], "answer": 1, "explanation": "Induction and deduction are the two basic processes of inferential reasoning in logic."}, {"q": "When the proposition of an inductive and deductive argument does not follow coherently, we say the former is.....and the latter is......", "options": ["Incorrect, Invalid", "Inconclusive, Incorrect", "Invalid, inconclusive", "Invalid, Incorrect"], "answer": 1, "explanation": "Weak inductive arguments are usually described as 'inconclusive,' while flawed argument structure overall is described here as 'incorrect.'"}, {"q": "...... provides the framework for scientific method", "options": ["Induction", "Analysis", "Atomism", "Immediate inference"], "answer": 0, "explanation": "Induction - reasoning from specific observations to general laws - underlies the scientific method."}, {"q": ".......are declarative statements or sentences capable of being verified such that their truth or falsity can be established.", "options": ["Inference", "Proposition", "Preposition", "Premise"], "answer": 1, "explanation": "A proposition is defined as a statement whose truth or falsity can be verified."}, {"q": "...... provides the framework for scientific method", "options": ["Induction", "Analysis", "Immediate inference", "Atomism"], "answer": 0, "explanation": "Induction underlies the scientific method by generalizing from observed cases."}, {"q": "In logic, what is identified as a proposition?", "options": ["It is a declarative statement or sentence", "It is the building blocks of an argument", "None of the above", "A and B above"], "answer": 3, "explanation": "A proposition is both a declarative statement and the basic building block of an argument."}, {"q": "As forms of arguments, deductive and inductive arguments are composed of", "options": ["Logical connectives that are not valid", "Propositions or statements which can either be true or false", "Emotive statements", "Claims that are always valid"], "answer": 1, "explanation": "Both deductive and inductive arguments are made up of propositions/statements that can be true or false."}, {"q": "According to Aristotelian logic, inductive arguments move from", "options": ["Particular premises to general conclusion", "General premises to particular conclusion", "Particular conclusion to particular premise", "General premises to invalid conclusion"], "answer": 0, "explanation": "In Aristotelian logic, induction reasons from particular premises to a general conclusion."}, {"q": "What is the relationship between argument and logic?", "options": ["All of the above", "It provides the formal structure in logic, while logic provides the criteria for evaluating argument", "By formal structure argument consists of premises and conclusion", "None of the above"], "answer": 1, "explanation": "Argument supplies the structure (premises + conclusion), while logic supplies the rules for evaluating that structure."}, {"q": ".......are declarative statements or sentences capable of being verified such that their truth or falsity can be established.", "options": ["Premise", "Inference", "Preposition", "Proposition"], "answer": 3, "explanation": "A proposition is a statement capable of being verified as true or false."}, {"q": "A data name typically", "options": ["Contains space(s)", "includes no special characters", "always begins with any alphabet A-Z or a-z", "contains a digit, but must be preceded by an alphabet", "Has 10 characters or less"], "answer": 2, "explanation": "In standard data/variable naming conventions, a data name typically must start with a letter."}, {"q": "How is inference related to logic?", "options": ["It is a mental process by which we reach a conclusion based on specific evidence, making propositions about the unknown using the known as a foundation", "It is a process by which we abstract and combine, link or synthesize events in the world to arrive at a judgment", "None of the above", "It is the ability to discern and describe connections between terms and statements whose association may not be immediately apparent", "All of the above"], "answer": 4, "explanation": "All the listed descriptions capture valid aspects of how inference functions in logic."}, {"q": "How then do we define a premise in argument?", "options": ["It is the building block of a conclusion, the prop, the leg on which the conclusion stands", "Premise is the very process of inference in an argument and in logic in general", "It is the antecedent condition for the conclusion", "Premise is the same as proposition", "Only (a) to (c) above"], "answer": 4, "explanation": "A premise supports the conclusion, functions as its antecedent condition, and is bound up with the process of inference - options (a) to (c) all apply."}, {"q": "A feature that allows the user to make last minute changes to documents before printing is", "options": ["SmartArt", "Cross-reference", "Hardcopy", "Printer", "Print Preview"], "answer": 4, "explanation": "Print Preview lets you see and adjust a document before it's actually printed."}, {"q": "The following: since, because, for, as, follows from, as shown by, as indicated by are:", "options": ["Conclusion indicators", "Premise indicators", "Premises", "Consequents", "Propositions"], "answer": 1, "explanation": "Words like 'since,' 'because,' and 'for' signal that a premise follows, so they're premise indicators."}, {"q": "A conclusion can be defined as:", "options": ["The proposition that is affirmed on the basis of other propositions of the argument", "The point where the premises hang together and the logical confluence of the premises", "The final submission or point of judgment in an argument", "All of the above", "The peak or the apex of the premises of an argument"], "answer": 3, "explanation": "All the listed descriptions capture valid ways of describing a conclusion."}, {"q": "A historical explanation of a city comprises its ......", "options": ["Geographical make-up", "Economic activities", "Origins, growth and the interactions of the various groups in time perspectives", "Sociological compositions"], "answer": 2, "explanation": "A city's history is explained through its origins, growth, and the interaction of groups over time."}, {"q": "A dependent economy is a ........", "options": ["Articulated one", "Disarticulated one", "Developed economy", "Neoliberal economy"], "answer": 1, "explanation": "A dependent (colonial-style) economy is described as 'disarticulated' - its sectors don't interconnect to serve internal development."}, {"q": "A major contribution of Christianity to politics in Nigeria was its ......", "options": ["Human rights advocacy", "Tradition of socio-political activism", "Emphasis on purity", "Critique of intellectual ills"], "answer": 1, "explanation": "Christian institutions in Nigeria fostered a tradition of socio-political activism, such as clergy speaking on governance."}, {"q": "The two types of argument/inference we have in logic include:", "options": ["Validity and probability", "Correctness and soundness", "Deduction and induction", "None of the above", "Truth and falsity"], "answer": 2, "explanation": "Deduction and induction are the two fundamental types of argument/inference in logic."}, {"q": "Any proposition that implies itself is a....", "options": ["Double proposition", "Fallacy", "Tautology", "Law of excluded middle", "Contradiction"], "answer": 2, "explanation": "A tautology is a proposition that is true by virtue of its own logical form."}, {"q": "\"Falere\" means....", "options": ["To be full", "To deceive", "To fail", "To fall", "To be frightened"], "answer": 1, "explanation": "The Latin root 'fallere' means 'to deceive,' the origin of the word 'fallacy.'"}, {"q": ".....is a guide of human thinking process", "options": ["Law of thought", "All of the above", "Natural law", "None of the above", "Positive law"], "answer": 0, "explanation": "The laws of thought (identity, non-contradiction, excluded middle) are the classical guides of correct reasoning."}, {"q": "Modus Ponens is.....", "options": ["Rule of inference", "Golden proposition", "Fallacy of Accent", "The rule of the Greeks", "Law of thought"], "answer": 0, "explanation": "Modus Ponens is a valid rule of inference in propositional logic."}, {"q": "\"Buhari is honest and not honest\" is...proposition", "options": ["Evasive", "Tautologuous", "Defensive", "False", "Simple"], "answer": 3, "explanation": "Asserting P and not-P together is a contradiction, which makes the statement false."}, {"q": "Which of the following has only one premise?", "options": ["Hypothetical Syllogism", "Constructive Dilemma", "Simplification", "Disjunctive Syllogism", "Modus Tollens"], "answer": 2, "explanation": "Simplification (P.Q, therefore P) uses only a single compound premise, unlike two-premise syllogisms."}, {"q": "Disjunctive Syllogism is a", "options": ["Copula", "Logical import", "Rule of inference", "Law of thought", "Fallacy of ambiguity"], "answer": 2, "explanation": "It is a valid rule of inference: from 'P or Q' and 'not P,' we can infer Q."}, {"q": ".....is a guide of human thinking process", "options": ["Law of thought", "All of the above", "None of the above", "Positive law", "Natural law"], "answer": 0, "explanation": "The laws of thought guide correct human reasoning."}, {"q": "Which of the following is a law of thought?", "options": ["Ignorantiam Elenchi", "Excluded Middle", "Constructive Dilemma", "Legalism", "Justice"], "answer": 1, "explanation": "The Law of Excluded Middle is one of the three classical laws of thought."}, {"q": "..... can influence the historian's idea of history.", "options": ["Historical characters", "Objectivity", "Events", "Methodology", "Historicism"], "answer": 4, "explanation": "Historicism - a theoretical lens about how history unfolds - shapes how a historian interprets events."}, {"q": "Philosophy begins with", "options": ["Peace", "Certainty", "War", "Crisis", "Wonder"], "answer": 4, "explanation": "Aristotle famously said philosophy begins in wonder."}, {"q": "A philosopher is .....", "options": ["A messenger of other practitioners", "A quick witted person", "A child of his culture", "None of the above"], "answer": 2, "explanation": "Philosophers are shaped by, and reflect, the culture and era from which they emerge."}, {"q": "..... deals with the general theories and presuppositions of education as a discipline", "options": ["Philology of education", "Phonology of education", "Methodology of education", "Science of education", "None of the above"], "answer": 4, "explanation": "This description matches 'philosophy of education,' which isn't among the listed options."}, {"q": "..... deals with the general theories and presuppositions of education as a discipline", "options": ["None of the above", "Phonology of education", "Science of education", "Philology of education", "Methodology of education"], "answer": 4, "explanation": "Among these choices, 'methodology of education' is the closest fit, though the precise term is philosophy of education."}, {"q": "Philosophy of other disciplines is a .....", "options": ["Third order activity", "Second order activity", "First order activity", "No activity enterprise", "Fourth order activity"], "answer": 1, "explanation": "Studying the philosophy of another field (e.g. philosophy of science) is a second-order activity - reflecting on that discipline rather than doing it directly."}, {"q": "Lack of universal definition of philosophy is caused by .....", "options": ["Anger among philosophers", "Difference in psychological nature of philosophers", "Inconsistency among philosophers", "Difference in school of thought of philosophers", "All of the above"], "answer": 3, "explanation": "Because philosophers belong to different schools of thought, they define philosophy differently."}, {"q": "Philosophy of religion can make the theologian ..... in religious issues.", "options": ["Superstitious", "Wiser", "Magical", "Spiritual", "Religious"], "answer": 1, "explanation": "Studying the philosophy of religion equips a theologian with deeper, more critical understanding - making them wiser."}, {"q": "Which of the following is a tool of philosophy?", "options": ["None of the above", "Logic", "Ethics", "Metaphysics", "Epistemology"], "answer": 1, "explanation": "Logic is one of philosophy's core analytical tools for evaluating arguments."}, {"q": "..... can influence the historian's idea of history.", "options": ["Historical characters", "Methodology", "Objectivity", "Events", "Historicism"], "answer": 4, "explanation": "Historicism shapes how historians interpret and narrate events."}, {"q": "The word 'political' is derived from the Greek", "options": ["Pontus", "Polaris", "Polis", "Politik"], "answer": 2, "explanation": "'Political' derives from the Greek 'polis,' meaning city-state."}, {"q": "Socio-political philosophy is a branch of.....", "options": ["Religion", "Reality", "ethics", "Philosophy"], "answer": 3, "explanation": "Socio-political philosophy is a branch of philosophy dealing with the organization of society and the state."}, {"q": "Employing the standard methods of philosophy, Socio-political philosophy investigates", "options": ["The principles of a proper social system.", "The force of nature", "Social status", "All of the above"], "answer": 0, "explanation": "Socio-political philosophy examines the principles underlying a just or proper social system."}, {"q": "The central task of socio-political philosophy, therefore, is to", "options": ["Describe how an ideal state ought to be organized", "Prescribe how an ideal state ought to be organized.", "Prescribes how an ideal state is organised", "Describes how an ideal man behaves"], "answer": 1, "explanation": "Its central task is prescriptive - determining how an ideal state ought to be organized."}, {"q": "Students tend to confuse political philosophy, Political science and.....", "options": ["Political education", "Politics", "Political theory", "Philosophy"], "answer": 1, "explanation": "Students often conflate political philosophy and political science with everyday 'politics.'"}, {"q": "Philosophers who discussed African Socialism include the following except", "options": ["Leopold Senghor", "Obafemi Awolowo", "Julius Nyerere", "Olusegun Obasanjo"], "answer": 3, "explanation": "Obasanjo isn't associated with African Socialism theory; Senghor, Awolowo, and Nyerere all wrote on it."}, {"q": "Entrepreneurial actions can be realistically divided into two stages: attention stage and", "options": ["networking stage", "evaluation stage", "risk-taking stage", "resource mobilization stage"], "answer": 3, "explanation": "After the attention stage, entrepreneurs move to mobilizing resources to act on the opportunity."}, {"q": "Ujamaa literally translates to", "options": ["Familyhood", "Relations", "Sisterhood", "Socialism"], "answer": 0, "explanation": "'Ujamaa' is Swahili for 'familyhood,' Nyerere's term for African socialism."}, {"q": "Employing the standard methods of philosophy, Socio-political philosophy investigates", "options": ["The force of nature", "Social status", "All of the above", "The principles of a proper social system."], "answer": 3, "explanation": "Socio-political philosophy centers on the principles of a proper social system."}, {"q": "The following are examples of medieval socio-political philosophers except", "options": ["Jesus", "A and B", "St Augustin", "Thomas Aquinas"], "answer": 0, "explanation": "Jesus lived in antiquity (1st century AD), before the medieval period began."}, {"q": "According to C S Momoh, African philosophy is the African doctrine on the....", "options": ["Spiritual", "Magical", "Epistemological", "Ethical", "Phenomena"], "answer": 4, "explanation": "C.S. Momoh describes African philosophy as the African doctrine of phenomena - the fundamental nature of reality and experience."}, {"q": ".....French philosopher examines philosophy from the point of view of the meaning of life.", "options": ["Morley Pointe", "Jean-Jacque Rousseau", "Rene Descartes", "Albert Camus", "Martin Heidegger"], "answer": 3, "explanation": "Albert Camus, associated with absurdism, examined philosophy through the lens of life's meaning."}, {"q": "British philosophy is anchored on - philosophical tradition.", "options": ["Spiritualism", "Holism", "Rationalism", "Pragmatism", "Empiricism"], "answer": 4, "explanation": "British philosophy is rooted in the empiricist tradition (Locke, Berkeley, Hume)."}, {"q": "The nature of African philosophy can be located in", "options": ["African dance", "African super force", "African philosophical stories", "African philosophical parables", "African philosophical tradition"], "answer": 4, "explanation": "It is located within African philosophical tradition - its indigenous systems of thought."}, {"q": ".....focused his study on Bantu philosophy.", "options": ["None of the above", "C.S. Momoh", "Obafemi Awolowo", "Placide Tempels", "Godwin Azenabor"], "answer": 3, "explanation": "Placide Tempels authored 'Bantu Philosophy,' a foundational text on the subject."}, {"q": "Which of the following is not a life force?", "options": ["Plants", "Ancestors", "Humans", "God", "None of the above."], "answer": 4, "explanation": "In African metaphysics, plants, ancestors, humans, and God are all considered part of the hierarchy of life force, so none is excluded."}, {"q": "African Metaphysics is.....", "options": ["Atomistic", "Pragmatic", "Pessimistic", "Holistic", "None of the above"], "answer": 3, "explanation": "African metaphysics is holistic, viewing reality as an interconnected whole rather than divided into isolated parts."}, {"q": "Which of the following has great influence on African philosophy?", "options": ["Magic", "Culture", "Education", "Parable", "Teaching"], "answer": 1, "explanation": "Culture strongly shapes African philosophical thought and its expression."}, {"q": "\"Negritude\" was coined by", "options": ["Obafemi Awolowo", "Leopold Senghor", "Aimie Cesaire", "All of the above", "None of the above"], "answer": 2, "explanation": "Aime Cesaire is credited with coining the term 'Negritude.'"}, {"q": ".....focused his study on Bantu philosophy.", "options": ["None of the above", "Placide Tempels", "Godwin Azenabor", "Obafemi Awolowo", "C.S. Momoh"], "answer": 1, "explanation": "Placide Tempels is the scholar associated with the study of Bantu philosophy."}, {"q": "Facts or data are collected for the purpose of.....", "options": ["laboratory analysis", "meditation", "verification", "A and B"], "answer": 2, "explanation": "Data collection serves the purpose of verification - testing claims against evidence."}, {"q": "What method of presenting the philosophy of science would require us to go back to the etymology of the Greek word for philosophy and the core areas of philosophy which define its exclusive functions?", "options": ["The critical method", "None of the above", "Pedestrian method", "Scientific method"], "answer": 2, "explanation": "The pedestrian method traces philosophy of science back to the etymological roots of 'philosophy' and its core branches."}, {"q": ".....of doing philosophy of science entails taking up science and examining its fundamental assumptions and presuppositions, its competing theories, its methods of inquiry and its relation or non-relation to other fields of study", "options": ["The critical method", "Scientific method", "All of the above", "Pedestrian method"], "answer": 0, "explanation": "The critical method involves scrutinizing a field's fundamental assumptions, theories, and methods."}, {"q": "What distinguishes pure science from social science?", "options": ["None of the above", "Finesse", "Rigour", "Reality"], "answer": 2, "explanation": "Pure sciences are typically distinguished by greater methodological rigour."}, {"q": "The three distinguishable methods of presenting science include the following except", "options": ["The original philosophical method.", "The scientific method", "The critical method", "The pedestrian method"], "answer": 0, "explanation": "Only the scientific, critical, and pedestrian methods are the standard three; 'original philosophical method' isn't one of them."}, {"q": "The following include basic characteristics that distinguish scientific knowledge from other sorts of knowledge, except", "options": ["Measurement", "Collection of data", "Research", "Experimentation"], "answer": 2, "explanation": "'Research' is a broad general term, not itself a specific distinguishing marker like measurement or experimentation."}, {"q": ".....of doing philosophy of science entails taking up science and examining its fundamental assumptions and presuppositions, its competing theories, its methods of inquiry and its relation or non-relation to other fields of study", "options": ["Scientific method", "The critical method", "Pedestrian method", "All of the above"], "answer": 1, "explanation": "The critical method critically examines a field's assumptions, theories, and methods."}, {"q": "What produces scientific activities is, primarily and mainly.....", "options": ["None of the above", "Experiments", "Research", "A hunch"], "answer": 3, "explanation": "Scientific inquiry often begins from a hunch or hypothesis that is then tested."}, {"q": "The distinguishable methods of presenting science includes the following except", "options": ["The critical method", "The original philosophical method", "The pedestrian method", "All of the above"], "answer": 1, "explanation": "'Original philosophical method' is not one of the three recognized methods (scientific, critical, pedestrian)."}, {"q": "What must philosophy do to maintain its pride of place and be relevant in the realm of the sciences?", "options": ["Make clear and insignificant contributions", "Make insignificant but justified relations", "Make clear statements and a significant contribution to the advancement of scientific knowledge", "All of the above"], "answer": 2, "explanation": "Philosophy stays relevant to science by making clear, meaningful contributions to scientific knowledge."}, {"q": "A bunch of text could be rotated, slanted and curved using", "options": ["WordArt", "Chart", "Table", "Hyperlink", "Insert"], "answer": 0, "explanation": "WordArt is the tool used to stylize text with curves, slants, and rotation."}, {"q": "The model of interpreting reality by logical positivists is.....", "options": ["Inductivist principle", "Clarification principle", "Falsification principle", "None of the above", "Verification principle"], "answer": 4, "explanation": "Logical positivists championed the verification principle - meaningful statements must be empirically verifiable."}, {"q": "...that takes the human condition as the primarily philosophical focus.", "options": ["All of the above", "Ethical intuitionism", "Logical positivism", "Pragmatism", "None of the above"], "answer": 3, "explanation": "Pragmatism centers philosophical inquiry on lived human experience and practical consequences."}, {"q": "....is a tentative solution to a research problem.", "options": ["Inter-subjectivity", "Data analysis", "Theory", "None of the above", "Measurement"], "answer": 2, "explanation": "A theory is a proposed, testable explanation - a tentative solution to a research problem."}, {"q": "Archimedes and Apollonius were scientists of the....", "options": ["Ancient Greek period", "Medieval period", "Modern period", "Hellenistic period", "Classical period"], "answer": 3, "explanation": "Both scientists worked during the Hellenistic period, after Alexander the Great and before Roman dominance."}, {"q": "....is true of science", "options": ["Deals with the physical", "Originates from meta and physical", "Originates from logos and techne", "Deals with the meta", "Originates from philo and Sophia"], "answer": 0, "explanation": "Science fundamentally investigates and explains the physical/natural world."}, {"q": "The falsificationist model of scientific research is ascribed to....", "options": ["Ibn Avicenna", "Charles Darwin", "Jabir ibn Hayyan", "Isaac Newton", "Karl Popper"], "answer": 4, "explanation": "Karl Popper proposed that scientific theories must be falsifiable to count as scientific."}, {"q": "20th century indigenous Pentecostal Churches in Nigeria included all except the....", "options": ["Christian Missionary Society (CMS)", "Deeper Life Christian Ministry", "Redeemed Christian Church of God", "Church of God Missions"], "answer": 0, "explanation": "CMS was a foreign missionary society, not an indigenous Nigerian Pentecostal church."}, {"q": "According to...revolution, the sun is the centre of the universe.", "options": ["All of the above", "Greek", "Ptolemaic", "Marxist", "Copernican"], "answer": 4, "explanation": "Copernicus proposed the heliocentric model with the sun at the centre of the universe."}, {"q": "\"Buhari is honest and not honest\" is...proposition", "options": ["False", "Evasive", "Simple", "Tautologuous", "Defensive"], "answer": 0, "explanation": "Asserting both P and not-P at once is a contradiction, which makes the statement false."}, {"q": "Which of the following does not feature in science?", "options": ["Hypothesis", "Verification", "Objectivity", "Experiment", "Introspection"], "answer": 4, "explanation": "Science relies on objective, testable methods; introspection is a subjective, first-person method not typical of scientific practice."}, {"q": "Technology can be interpreted as.....", "options": ["Only A and D above", "Crafted tools used in solving problems", "The study of reasoning employed in solving problems", "The study of crafted tools used in solving problems", "Reasoning for solving problems"], "answer": 3, "explanation": "Technology is best defined as the study and application of crafted tools used to solve problems."}, {"q": "One of the following is not true of philosophy", "options": ["Love of techne", "Questioning of everything", "Highest form of inquiry", "Love of wisdom", "Critical inquiry into things"], "answer": 0, "explanation": "Philosophy is 'love of wisdom' (philo-sophia), not 'love of techne' (craft)."}, {"q": "Technology does not involve...", "options": ["Sophia", "Techne", "Craft", "Art", "Logos"], "answer": 0, "explanation": "Technology relates to techne, craft, art, and logos - but not sophia (wisdom), which belongs to philosophy."}, {"q": "Technology is the same as....", "options": ["Logos", "Philo", "Techne", "C and D above", "Sophia"], "answer": 2, "explanation": "Technology is essentially synonymous with 'techne' - skill or craft."}, {"q": ".....is not part of philosophy.", "options": ["Epistemology", "Logic", "Ethics", "Metaphysics", "Science"], "answer": 4, "explanation": "Science, while related, is typically treated as distinct from philosophy's core branches (epistemology, logic, ethics, metaphysics)."}, {"q": ".....is not part of philosophy.", "options": ["Epistemology", "Logic", "Metaphysics", "Science", "Ethics"], "answer": 3, "explanation": "Science stands apart from philosophy's core branches."}, {"q": "Science can be narrow or....", "options": ["None of the above", "Restricted", "General", "Metaphysical", "Universal"], "answer": 4, "explanation": "Science can range from narrowly specialized fields to universal, all-encompassing inquiry."}, {"q": "....is true of science", "options": ["Deals with the physical", "Originates from philo and Sophia", "Originates from meta and physical", "Originates from logos and techne", "Deals with the meta"], "answer": 3, "explanation": "The word 'science' has roots relating to systematic method and craft - logos and techne."}, {"q": "Biology, physics and Chemistry can be classified under....", "options": ["Narrow and General", "None of the above", "Narrow", "All of the above", "General"], "answer": 2, "explanation": "These are narrow (specialized) sciences, each focused on a specific domain, unlike broad general science."}, {"q": "According to ....the highest attainment of the true nature of things is the good", "options": ["Heraclitus", "Thales", "Aristotle", "Plato", "Empedocles"], "answer": 3, "explanation": "For Plato, the Form of the Good represents the highest reality and the ultimate object of knowledge."}, {"q": "Philosophy involves all of the following except....", "options": ["Attempt to acquire knowledge and satisfy curiosity through the pursuit of mental excellence.", "Attempt to take wise decisions based on certain scales of values", "None of the above", "Attempt by man to know the world around him in order to act rationally and consistently"], "answer": 2, "explanation": "All three listed descriptions are valid characterizations of what philosophy involves."}, {"q": ".....contends that the major task of philosophy is analysis of scientific terms or concepts.", "options": ["Logical positivism", "Existentialism", "Metaphysical positivism", "Scientific positivism", "Pragmatism"], "answer": 0, "explanation": "Logical positivism holds that philosophy's chief job is clarifying and analyzing scientific concepts and language."}, {"q": "The sufficient conditions for the existence of society can be classified into....", "options": ["None of the above", "The objective and the existential conditions", "The objective and the material conditions", "The objective and the subjective conditions", "The objective and the internal conditions"], "answer": 3, "explanation": "Society requires both objective conditions (shared space, structure) and subjective conditions (shared identity, will to associate)."}, {"q": "Which of the following is a philosophy of decolonization upon which many African societies mobilized against the imperialists and gained their political independence?", "options": ["Existentialism", "Logical positivism", "Ethical Intuitionism", "Marxism", "Pragmatism"], "answer": 3, "explanation": "Marxism, with its critique of capitalism and imperialism, inspired many African independence movements."}, {"q": "For Socrates...", "options": ["Ignorance is the root of moral evil.", "Knowledge is virtue", "Knowledge becomes an instrument of empowerment and liberation and directs the mind for rational decision.", "All of the above", "None of the above"], "answer": 3, "explanation": "Socrates held that ignorance causes moral wrongdoing, that knowledge is virtue, and that knowledge empowers rational choice - all consistent with his philosophy."}, {"q": "Separation of powers, federalism, checks and balances, representative government, civil rights and popular sovereignty emerged from....", "options": ["None of the above", "All of the above", "Scientific principle", "Material principle", "Philosophical principle"], "answer": 4, "explanation": "These political structures trace back to philosophical ideas (e.g. Locke, Montesquieu) about how government should be organized."}, {"q": ".....French philosopher examines philosophy from the point of view of the meaning of life.", "options": ["Albert Camus", "Morley Pointe", "Jean-Jacque Rousseau", "Martin Heidegger", "Rene Descartes"], "answer": 0, "explanation": "Albert Camus explored philosophy through the lens of life's meaning and the absurd."}, {"q": "...that takes the human condition as the primarily philosophical focus.", "options": ["Logical positivism", "None of the above", "Pragmatism", "Ethical intuitionism", "All of the above"], "answer": 2, "explanation": "Pragmatism grounds philosophy in practical human experience."}, {"q": "Which of the following is not an objective condition for the existence of society?", "options": ["Sharing a common culture", "None of the above", "Occupying a common territorial space", "Sharing common military defence", "Group of people"], "answer": 3, "explanation": "Common culture, territory, and population are objective conditions for society; shared military defence is not typically listed as one."}];
 
-{q:"Plato sees knowledge as .....................",options:["idea","scientific","matter","uncritical thought"],answer:0},
-{q:"Instead of printing the first two pages, a clerk mistakenly printed the entire 20-page document. What precaution(s) can you suggest?",options:["She should have placed only 2 pieces of paper in the tray, and specified desired pages under Settings in Print Preview","She could have selected the required portion and printed using the selection option, and specified desired pages under Settings in Print Preview","She could have specified the desired pages under Settings in Print Preview","She should have placed only 2 pieces of paper in the printer's tray","She could have selected the required portion and printed using selection option"],answer:1},
-{q:"Plato is a",options:["Fallacy of denial","Rule of Inference","German philosopher","Greek philosopher"],answer:3},
-{q:"One of the following does not encourage corruption in Nigeria ..........",options:["Transparent allocation of resources","Weak and ineffective institutions","A corrupt judiciary","Lack of basic necessities of life"],answer:0},
-{q:"Philosophers in the medieval period include the following except?",options:["Aquinas","John Scotus","Augustine","Aristotle"],answer:3},
-{q:"Professional academic metaphysics, strictly speaking, is",options:["Phenomenology","Scientology","Ontology","Science"],answer:2},
-{q:"One of the following is an example of a word processing application",options:["Oracle","Microsoft Word","Microsoft Excel","Microsoft Access"],answer:1},
-{q:"Formatting a document or text means",options:["Proofreading the document","Switching the input method","Presenting misleading information to cover up errors","Changing the default setting to suit own purpose","Translating a text into another language"],answer:3},
-{q:"For the materialist school, reality is reduced only to",options:["Material clothes","Ideologies","None of the above","Matter"],answer:3},
-{q:"Microphone is an example of",options:["Output device","None of the options","Input device","Storage device"],answer:2},
+let current = 0;
+let score = 0;
+let selectedIdx = null;
+let answered = false;
 
-{q:"A Proposition is",options:["None of the above","An interrogative sentence","An exclamatory statement","A redundant"],answer:0},
-{q:"When philosophy investigates other disciplines or areas of study, it is usually concerned with",options:["The ground of the disciplines","A and B","The area of study in question","B alone"],answer:0},
-{q:"The study of being is known as",options:["Cosmogony","Metaphysics","Cosmology","Ontology"],answer:3},
-{q:"According to ............ love and strife are principles of reality",options:["None of the above","Thales","Plato","Anaximander"],answer:0},
-{q:"According to Parmenides, ultimate reality is",options:["air","water","fire","none of the above"],answer:3},
-{q:"A posteriori can be traced to",options:["sophist","rationalist","empiricist","existentialist"],answer:2},
-{q:"According to ............... man is condemned to be free",options:["Moralists","Existentialists","Ontologists","Phenomenalists"],answer:1},
-{q:"According to ................ reality is always changing",options:["Anaximander","Heraclitus","Empedocles","Thales"],answer:1},
-{q:"According to Aristotelian logic, inductive arguments move from",options:["Particular premises to particular conclusion","General premises to particular conclusion","Particular conclusion to particular premise","None of the above"],answer:3},
-{q:"According to ................ knowledge is virtue",options:["Socrates","Bertrand Husserl","Bertrand Russell","Albert Popkins"],answer:0},
-
-{q:"Aesthetics is derived from the Greek word....",options:["Hestikos","Aesthetikos","Aestemors","None of the above"],answer:1},
-{q:"Bishop Berkeley belongs to the ............ school of thought",options:["Empiricism","Marxism","Idealism","Materialism"],answer:2},
-{q:"Benjamin Nnamdi Azikiwe argued that education should ......",options:["Be rejected in order to promote indigenous culture","Be given only to the Igbos and the Nupe","Be used only in the church and religious assemblies","Be first point of reforms in post-war reconstruction in British West Africa"],answer:3},
-{q:"Corruption could be categorised as all except..........",options:["Judicial corruption","Electoral corruption","Megalomania","Bureaucratic corruption"],answer:2},
-{q:"Consider the following computer specification: 2GHZ, 4GB, 500GB HDD. The speed of the computer is?",options:["500GB HDD","None of the options","2GHZ","4GB"],answer:2},
-{q:"Any device connected to a network and capable of receiving, sending and forwarding data is called",options:["Host","Node","Server","None of the options","workstation"],answer:1},
-{q:"Being qua being is the focus of ......................",options:["Metaphysics","Phenomenology","Epistemology","Ethics"],answer:0},
-{q:"All except one of the following were widespread in pre-jihad Hausaland.",options:["Religious polytheism","The practice of venerating trees and rocks","Christian missionary activities","The practice of pouring libations on rocks"],answer:2},
-{q:"Arrange the following steps in order to set document margins: I. Click Page Layout Tab  II. Click the arrow at the lower right-end of the Page Setup Dialog box  III. Select the options (margins, orientation, etc.)  IV. Click Margins submenus  V. Click OK",options:["I, III, II, IV, V","I, II, III, V, IV","I, II, IV, III, V","These steps are incomplete","V, IV, III, I, II"],answer:2},
-{q:"Due to financial misappropriations, Nigeria has not experienced ........",options:["Major volcanic eruption","Poor education","Maternal health crises","Broken and dilapidated infrastructure"],answer:0},
-
-{q:"The processes or methods of inferential reasoning in logic include",options:["Mediate and Immediate","Induction and deduction","Simple and complex","Conjunction and disjunction"],answer:1},
-{q:"When the proposition of an inductive and deductive argument does not follow coherently, we say the former is.....and the latter is......",options:["Incorrect, Invalid","Inconclusive, Incorrect","Invalid, inconclusive","Invalid, Incorrect"],answer:1},
-{q:"...... provides the framework for scientific method",options:["Induction","Analysis","Atomism","Immediate inference"],answer:0},
-{q:".......are declarative statements or sentences capable of being verified such that their truth or falsity can be established.",options:["Inference","Proposition","Preposition","Premise"],answer:1},
-{q:"...... provides the framework for scientific method",options:["Induction","Analysis","Immediate inference","Atomism"],answer:0},
-{q:"In logic, what is identified as a proposition?",options:["It is a declarative statement or sentence","It is the building blocks of an argument","None of the above","A and B above"],answer:3},
-{q:"As forms of arguments, deductive and inductive arguments are composed of",options:["Logical connectives that are not valid","Propositions or statements which can either be true or false","Emotive statements","Claims that are always valid"],answer:1},
-{q:"According to Aristotelian logic, inductive arguments move from",options:["Particular premises to general conclusion","General premises to particular conclusion","Particular conclusion to particular premise","General premises to invalid conclusion"],answer:0},
-{q:"What is the relationship between argument and logic?",options:["All of the above","It provides the formal structure in logic, while logic provides the criteria for evaluating argument","By formal structure argument consists of premises and conclusion","None of the above"],answer:1},
-{q:".......are declarative statements or sentences capable of being verified such that their truth or falsity can be established.",options:["Premise","Inference","Preposition","Proposition"],answer:3},
-
-{q:"A data name typically",options:["Contains space(s)","includes no special characters","always begins with any alphabet A-Z or a-z","contains a digit, but must be preceded by an alphabet","Has 10 characters or less"],answer:2},
-{q:"How is inference related to logic?",options:["It is a mental process by which we reach a conclusion based on specific evidence, making propositions about the unknown using the known as a foundation","It is a process by which we abstract and combine, link or synthesize events in the world to arrive at a judgment","None of the above","It is the ability to discern and describe connections between terms and statements whose association may not be immediately apparent","All of the above"],answer:4},
-{q:"How then do we define a premise in argument?",options:["It is the building block of a conclusion, the prop, the leg on which the conclusion stands","Premise is the very process of inference in an argument and in logic in general","It is the antecedent condition for the conclusion","Premise is the same as proposition","Only (a) to (c) above"],answer:4},
-{q:"A feature that allows the user to make last minute changes to documents before printing is",options:["SmartArt","Cross-reference","Hardcopy","Printer","Print Preview"],answer:4},
-{q:"The following: since, because, for, as, follows from, as shown by, as indicated by are:",options:["Conclusion indicators","Premise indicators","Premises","Consequents","Propositions"],answer:1},
-{q:"A conclusion can be defined as:",options:["The proposition that is affirmed on the basis of other propositions of the argument","The point where the premises hang together and the logical confluence of the premises","The final submission or point of judgment in an argument","All of the above","The peak or the apex of the premises of an argument"],answer:3},
-{q:"A historical explanation of a city comprises its ......",options:["Geographical make-up","Economic activities","Origins, growth and the interactions of the various groups in time perspectives","Sociological compositions"],answer:2},
-{q:"A dependent economy is a ........",options:["Articulated one","Disarticulated one","Developed economy","Neoliberal economy"],answer:1},
-{q:"A major contribution of Christianity to politics in Nigeria was its ......",options:["Human rights advocacy","Tradition of socio-political activism","Emphasis on purity","Critique of intellectual ills"],answer:1},
-{q:"The two types of argument/inference we have in logic include:",options:["Validity and probability","Correctness and soundness","Deduction and induction","None of the above","Truth and falsity"],answer:2},
-
-{q:"Any proposition that implies itself is a....",options:["Double proposition","Fallacy","Tautology","Law of excluded middle","Contradiction"],answer:2},
-{q:'"Falere" means....',options:["To be full","To deceive","To fail","To fall","To be frightened"],answer:1},
-{q:".....is a guide of human thinking process",options:["Law of thought","All of the above","Natural law","None of the above","Positive law"],answer:0},
-{q:"Modus Ponens is.....",options:["Rule of inference","Golden proposition","Fallacy of Accent","The rule of the Greeks","Law of thought"],answer:0},
-{q:'"Buhari is honest and not honest" is...proposition',options:["Evasive","Tautologuous","Defensive","False","Simple"],answer:3},
-{q:"Which of the following has only one premise?",options:["Hypothetical Syllogism","Constructive Dilemma","Simplification","Disjunctive Syllogism","Modus Tollens"],answer:2},
-{q:"Disjunctive Syllogism is a",options:["Copula","Logical import","Rule of inference","Law of thought","Fallacy of ambiguity"],answer:2},
-{q:".....is a guide of human thinking process",options:["Law of thought","All of the above","None of the above","Positive law","Natural law"],answer:0},
-{q:"Which of the following is a law of thought?",options:["Ignorantiam Elenchi","Excluded Middle","Constructive Dilemma","Legalism","Justice"],answer:1},
-
-{q:"..... can influence the historian's idea of history.",options:["Historical characters","Objectivity","Events","Methodology","Historicism"],answer:4},
-{q:"Philosophy begins with",options:["Peace","Certainty","War","Crisis","Wonder"],answer:4},
-{q:"A philosopher is .....",options:["A messenger of other practitioners","A quick witted person","A child of his culture","None of the above"],answer:2},
-{q:"..... deals with the general theories and presuppositions of education as a discipline",options:["Philology of education","Phonology of education","Methodology of education","Science of education","None of the above"],answer:4},
-{q:"..... deals with the general theories and presuppositions of education as a discipline",options:["None of the above","Phonology of education","Science of education","Philology of education","Methodology of education"],answer:4},
-{q:"Philosophy of other disciplines is a .....",options:["Third order activity","Second order activity","First order activity","No activity enterprise","Fourth order activity"],answer:1},
-{q:"Lack of universal definition of philosophy is caused by .....",options:["Anger among philosophers","Difference in psychological nature of philosophers","Inconsistency among philosophers","Difference in school of thought of philosophers","All of the above"],answer:3},
-{q:"Philosophy of religion can make the theologian ..... in religious issues.",options:["Superstitious","Wiser","Magical","Spiritual","Religious"],answer:1},
-{q:"Which of the following is a tool of philosophy?",options:["None of the above","Logic","Ethics","Metaphysics","Epistemology"],answer:1},
-{q:"..... can influence the historian's idea of history.",options:["Historical characters","Methodology","Objectivity","Events","Historicism"],answer:4},
-
-{q:"The word 'political' is derived from the Greek",options:["Pontus","Polaris","Polis","Politik"],answer:2},
-{q:"Socio-political philosophy is a branch of.....",options:["Religion","Reality","ethics","Philosophy"],answer:3},
-{q:"Employing the standard methods of philosophy, Socio-political philosophy investigates",options:["The principles of a proper social system.","The force of nature","Social status","All of the above"],answer:0},
-{q:"The central task of socio-political philosophy, therefore, is to",options:["Describe how an ideal state ought to be organized","Prescribe how an ideal state ought to be organized.","Prescribes how an ideal state is organised","Describes how an ideal man behaves"],answer:1},
-{q:"Students tend to confuse political philosophy, Political science and.....",options:["Political education","Politics","Political theory","Philosophy"],answer:1},
-{q:"Philosophers who discussed African Socialism include the following except",options:["Leopold Senghor","Obafemi Awolowo","Julius Nyerere","Olusegun Obasanjo"],answer:3},
-{q:"Entrepreneurial actions can be realistically divided into two stages: attention stage and",options:["networking stage","evaluation stage","risk-taking stage","resource mobilization stage"],answer:3},
-{q:"Ujamaa literally translates to",options:["Familyhood","Relations","Sisterhood","Socialism"],answer:0},
-{q:"Employing the standard methods of philosophy, Socio-political philosophy investigates",options:["The force of nature","Social status","All of the above","The principles of a proper social system."],answer:3},
-{q:"The following are examples of medieval socio-political philosophers except",options:["Jesus","A and B","St Augustine","Thomas Aquinas"],answer:0},
-
-{q:"According to C S Momoh, African philosophy is the African doctrine on the....",options:["Spiritual","Magical","Epistemological","Ethical","Phenomena"],answer:4},
-{q:".....French philosopher examines philosophy from the point of view of the meaning of life.",options:["Morley Pointe","Jean-Jacque Rousseau","Rene Descartes","Albert Camus","Martin Heidegger"],answer:3},
-{q:"British philosophy is anchored on - philosophical tradition.",options:["Spiritualism","Holism","Rationalism","Pragmatism","Empiricism"],answer:4},
-{q:"The nature of African philosophy can be located in",options:["African dance","African super force","African philosophical stories","African philosophical parables","African philosophical tradition"],answer:4},
-{q:".....focused his study on Bantu philosophy.",options:["None of the above","C.S. Momoh","Obafemi Awolowo","Placide Tempels","Godwin Azenabor"],answer:3},
-{q:"Which of the following is not a life force?",options:["Plants","Ancestors","Humans","God","None of the above."],answer:4},
-{q:"African Metaphysics is.....",options:["Atomistic","Pragmatic","Pessimistic","Holistic","None of the above"],answer:3},
-{q:"Which of the following has great influence on African philosophy?",options:["Magic","Culture","Education","Parable","Teaching"],answer:1},
-{q:'"Negritude" was coined by',options:["Obafemi Awolowo","Leopold Senghor","Aimie Cesaire","All of the above","None of the above"],answer:2},
-{q:".....focused his study on Bantu philosophy.",options:["None of the above","Placide Tempels","Godwin Azenabor","Obafemi Awolowo","C.S. Momoh"],answer:1},
-
-{q:"Facts or data are collected for the purpose of.....",options:["laboratory analysis","meditation","verification","A and B"],answer:2},
-{q:"What method of presenting the philosophy of science would require us to go back to the etymology of the Greek word for philosophy and the core areas of philosophy which define its exclusive functions?",options:["The critical method","None of the above","Pedestrian method","Scientific method"],answer:2},
-{q:".....of doing philosophy of science entails taking up science and examining its fundamental assumptions and presuppositions, its competing theories, its methods of inquiry and its relation or non-relation to other fields of study",options:["The critical method","Scientific method","All of the above","Pedestrian method"],answer:0},
-{q:"What distinguishes pure science from social science?",options:["None of the above","Finesse","Rigour","Reality"],answer:2},
-{q:"The three distinguishable methods of presenting science include the following except",options:["The original philosophical method.","The scientific method","The critical method","The pedestrian method"],answer:0},
-{q:"The following include basic characteristics that distinguish scientific knowledge from other sorts of knowledge, except",options:["Measurement","Collection of data","Research","Experimentation"],answer:2},
-{q:".....of doing philosophy of science entails taking up science and examining its fundamental assumptions and presuppositions, its competing theories, its methods of inquiry and its relation or non-relation to other fields of study",options:["Scientific method","The critical method","Pedestrian method","All of the above"],answer:1},
-{q:"What produces scientific activities is, primarily and mainly.....",options:["None of the above","Experiments","Research","A hunch"],answer:3},
-{q:"The distinguishable methods of presenting science includes the following except",options:["The critical method","The original philosophical method","The pedestrian method","All of the above"],answer:1},
-{q:"What must philosophy do to maintain its pride of place and be relevant in the realm of the sciences?",options:["Make clear and insignificant contributions","Make insignificant but justified relations","Make clear statements and a significant contribution to the advancement of scientific knowledge","All of the above"],answer:2},
-
-{q:"A bunch of text could be rotated, slanted and curved using",options:["WordArt","Chart","Table","Hyperlink","Insert"],answer:0},
-{q:"The model of interpreting reality by logical positivists is.....",options:["Inductivist principle","Clarification principle","Falsification principle","None of the above","Verification principle"],answer:4},
-{q:"...that takes the human condition as the primarily philosophical focus.",options:["All of the above","Ethical intuitionism","Logical positivism","Pragmatism","None of the above"],answer:3},
-{q:"....is a tentative solution to a research problem.",options:["Inter-subjectivity","Data analysis","Theory","None of the above","Measurement"],answer:2},
-{q:"Archimedes and Apollonius were scientists of the....",options:["Ancient Greek period","Medieval period","Modern period","Hellenistic period","Classical period"],answer:3},
-{q:"....is true of science",options:["Deals with the physical","Originates from meta and physical","Originates from logos and techne","Deals with the meta","Originates from philo and Sophia"],answer:0},
-{q:"The falsificationist model of scientific research is ascribed to....",options:["Ibn Avicenna","Charles Darwin","Jabir ibn Hayyan","Isaac Newton","Karl Popper"],answer:4},
-{q:"20th century indigenous Pentecostal Churches in Nigeria included all except the....",options:["Christian Missionary Society (CMS)","Deeper Life Christian Ministry","Redeemed Christian Church of God","Church of God Missions"],answer:0},
-{q:"According to...revolution, the sun is the centre of the universe.",options:["All of the above","Greek","Ptolemaic","Marxist","Copernican"],answer:4},
-{q:'"Buhari is honest and not honest" is...proposition',options:["False","Evasive","Simple","Tautologuous","Defensive"],answer:0},
-
-{q:"Which of the following does not feature in science?",options:["Hypothesis","Verification","Objectivity","Experiment","Introspection"],answer:4},
-{q:"Technology can be interpreted as.....",options:["Only A and D above","Crafted tools used in solving problems","The study of reasoning employed in solving problems","The study of crafted tools used in solving problems","Reasoning for solving problems"],answer:3},
-{q:"One of the following is not true of philosophy",options:["Love of techne","Questioning of everything","Highest form of inquiry","Love of wisdom","Critical inquiry into things"],answer:0},
-{q:"Technology does not involve...",options:["Sophia","Techne","Craft","Art","Logos"],answer:0},
-{q:"Technology is the same as....",options:["Logos","Philo","Techne","C and D above","Sophia"],answer:2},
-{q:".....is not part of philosophy.",options:["Epistemology","Logic","Ethics","Metaphysics","Science"],answer:4},
-{q:".....is not part of philosophy.",options:["Epistemology","Logic","Metaphysics","Science","Ethics"],answer:3},
-{q:"Science can be narrow or....",options:["None of the above","Restricted","General","Metaphysical","Universal"],answer:4},
-{q:"....is true of science",options:["Deals with the physical","Originates from philo and Sophia","Originates from meta and physical","Originates from logos and techne","Deals with the meta"],answer:3},
-{q:"Biology, physics and Chemistry can be classified under....",options:["Narrow and General","None of the above","Narrow","All of the above","General"],answer:2},
-
-{q:"According to ....the highest attainment of the true nature of things is the good",options:["Heraclitus","Thales","Aristotle","Plato","Empedocles"],answer:3},
-{q:"Philosophy involves all of the following except....",options:["Attempt to acquire knowledge and satisfy curiosity through the pursuit of mental excellence.","Attempt to take wise decisions based on certain scales of values","None of the above","Attempt by man to know the world around him in order to act rationally and consistently"],answer:2},
-{q:".....contends that the major task of philosophy is analysis of scientific terms or concepts.",options:["Logical positivism","Existentialism","Metaphysical positivism","Scientific positivism","Pragmatism"],answer:0},
-{q:"The sufficient conditions for the existence of society can be classified into....",options:["None of the above","The objective and the existential conditions","The objective and the material conditions","The objective and the subjective conditions","The objective and the internal conditions"],answer:3},
-{q:"Which of the following is a philosophy of decolonization upon which many African societies mobilized against the imperialists and gained their political independence?",options:["Existentialism","Logical positivism","Ethical Intuitionism","Marxism","Pragmatism"],answer:3},
-{q:"For Socrates...",options:["Ignorance is the root of moral evil.","Knowledge is virtue","Knowledge becomes an instrument of empowerment and liberation and directs the mind for rational decision.","All of the above","None of the above"],answer:3},
-{q:"Separation of powers, federalism, checks and balances, representative government, civil rights and popular sovereignty emerged from....",options:["None of the above","All of the above","Scientific principle","Material principle","Philosophical principle"],answer:4},
-{q:".....French philosopher examines philosophy from the point of view of the meaning of life.",options:["Albert Camus","Morley Pointe","Jean-Jacque Rousseau","Martin Heidegger","Rene Descartes"],answer:0},
-{q:"...that takes the human condition as the primarily philosophical focus.",options:["Logical positivism","None of the above","Pragmatism","Ethical intuitionism","All of the above"],answer:2},
-{q:"Which of the following is not an objective condition for the existence of society?",options:["Sharing a common culture","None of the above","Occupying a common territorial space","Sharing common military defence","Group of people"],answer:3},
-];
-
-const form = document.getElementById('quiz-form');
-const progressEl = document.getElementById('progress');
+const qIndexEl = document.getElementById('q-index');
+const qTextEl = document.getElementById('q-text');
+const optionsListEl = document.getElementById('options-list');
+const feedbackEl = document.getElementById('feedback');
+const feedbackTitleEl = document.getElementById('feedback-title');
+const feedbackBodyEl = document.getElementById('feedback-body');
+const checkBtn = document.getElementById('check-btn');
+const nextBtn = document.getElementById('next-btn');
+const progressFill = document.getElementById('progress-fill');
+const progressText = document.getElementById('progress-text');
+const questionCard = document.getElementById('question-card');
+const finalScreen = document.getElementById('final-screen');
+const restartBtn = document.getElementById('restart-btn');
 
 function letter(i){ return String.fromCharCode(97+i); }
 
-QUESTIONS.forEach((item, qi) => {
-  const card = document.createElement('div');
-  card.className = 'question-card';
-  card.dataset.qi = qi;
+function renderQuestion() {
+  const item = QUESTIONS[current];
+  selectedIdx = null;
+  answered = false;
 
-  const idxDiv = document.createElement('div');
-  idxDiv.className = 'q-index';
-  idxDiv.textContent = 'Question ' + (qi+1) + ' of ' + QUESTIONS.length;
-  card.appendChild(idxDiv);
-
-  const qText = document.createElement('div');
-  qText.className = 'q-text';
-  qText.textContent = item.q;
-  card.appendChild(qText);
+  qIndexEl.textContent = 'Question ' + (current+1) + ' of ' + QUESTIONS.length;
+  qTextEl.textContent = item.q;
+  optionsListEl.innerHTML = '';
+  feedbackEl.classList.remove('show');
+  checkBtn.style.display = 'inline-block';
+  checkBtn.disabled = true;
+  nextBtn.style.display = 'none';
 
   item.options.forEach((opt, oi) => {
     const label = document.createElement('label');
     label.className = 'option';
     label.dataset.oi = oi;
+
     const input = document.createElement('input');
     input.type = 'radio';
-    input.name = 'q' + qi;
+    input.name = 'opt';
     input.value = oi;
-    input.addEventListener('change', updateProgress);
+    input.addEventListener('change', () => {
+      selectedIdx = oi;
+      checkBtn.disabled = false;
+    });
+
     const span = document.createElement('span');
     span.textContent = letter(oi) + '. ' + opt;
+
     label.appendChild(input);
     label.appendChild(span);
-    card.appendChild(label);
+    optionsListEl.appendChild(label);
   });
 
-  form.appendChild(card);
-});
-
-function updateProgress(){
-  const answered = QUESTIONS.filter((_, qi) => form.querySelector(`input[name="q${qi}"]:checked`)).length;
-  progressEl.textContent = answered + ' of ' + QUESTIONS.length + ' answered';
+  updateProgress();
 }
 
-document.getElementById('reset-btn').addEventListener('click', () => {
-  form.reset();
-  document.querySelectorAll('.option').forEach(o => o.classList.remove('correct','incorrect'));
-  document.querySelectorAll('.unanswered-flag').forEach(e => e.remove());
-  document.getElementById('result-banner').style.display = 'none';
-  updateProgress();
+function updateProgress() {
+  const pct = ((current) / QUESTIONS.length) * 100;
+  progressFill.style.width = pct + '%';
+  progressText.textContent = 'Question ' + (current+1) + ' of ' + QUESTIONS.length;
+}
+
+checkBtn.addEventListener('click', () => {
+  if (selectedIdx === null || answered) return;
+  answered = true;
+
+  const item = QUESTIONS[current];
+  const options = optionsListEl.querySelectorAll('.option');
+  options.forEach(o => o.classList.add('locked'));
+  options.forEach(o => o.querySelector('input').disabled = true);
+
+  options[item.answer].classList.add('correct');
+
+  const isCorrect = selectedIdx === item.answer;
+  if (isCorrect) {
+    score++;
+  } else {
+    options[selectedIdx].classList.add('incorrect');
+  }
+
+  feedbackTitleEl.textContent = isCorrect ? 'Correct!' : 'Not quite.';
+  feedbackTitleEl.className = 'feedback-title ' + (isCorrect ? 'correct' : 'incorrect');
+  feedbackBodyEl.textContent = item.explanation;
+  feedbackEl.classList.add('show');
+
+  checkBtn.style.display = 'none';
+  nextBtn.style.display = 'inline-block';
+  nextBtn.textContent = (current === QUESTIONS.length - 1) ? 'See Results' : 'Next Question';
+});
+
+nextBtn.addEventListener('click', () => {
+  current++;
+  if (current >= QUESTIONS.length) {
+    showFinal();
+  } else {
+    renderQuestion();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+});
+
+function showFinal() {
+  questionCard.style.display = 'none';
+  finalScreen.style.display = 'block';
+  progressFill.style.width = '100%';
+  progressText.textContent = 'Quiz complete';
+
+  const pct = ((score/QUESTIONS.length)*100).toFixed(1);
+  document.getElementById('final-score').textContent = score + ' / ' + QUESTIONS.length + ' (' + pct + '%)';
+
+  let msg = 'Nice work — you can restart to try for a better score.';
+  if (pct >= 80) msg = 'Excellent grasp of the material!';
+  else if (pct >= 60) msg = 'Solid effort — a bit more review and you\'ll have it locked in.';
+  else msg = 'Worth another pass through the material — restart whenever you\'re ready.';
+  document.getElementById('final-sub').textContent = msg;
+
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+restartBtn.addEventListener('click', () => {
+  current = 0;
+  score = 0;
+  questionCard.style.display = 'block';
+  finalScreen.style.display = 'none';
+  renderQuestion();
   window.scrollTo({top:0, behavior:'smooth'});
 });
 
-document.getElementById('submit-btn').addEventListener('click', () => {
-  let score = 0;
-  let unanswered = 0;
-
-  QUESTIONS.forEach((item, qi) => {
-    const card = form.querySelector(`.question-card[data-qi="${qi}"]`);
-    const selected = form.querySelector(`input[name="q${qi}"]:checked`);
-    const options = card.querySelectorAll('.option');
-
-    options.forEach(o => o.classList.remove('correct','incorrect'));
-    const existingFlag = card.querySelector('.unanswered-flag');
-    if (existingFlag) existingFlag.remove();
-
-    // mark correct answer
-    options[item.answer].classList.add('correct');
-
-    if (selected) {
-      const chosenIdx = parseInt(selected.value, 10);
-      if (chosenIdx === item.answer) {
-        score++;
-      } else {
-        options[chosenIdx].classList.add('incorrect');
-      }
-    } else {
-      unanswered++;
-      const idxDiv = card.querySelector('.q-index');
-      const flag = document.createElement('span');
-      flag.className = 'unanswered-flag';
-      flag.textContent = '— not answered';
-      idxDiv.appendChild(flag);
-    }
-  });
-
-  const total = QUESTIONS.length;
-  const pct = ((score/total)*100).toFixed(1);
-  const banner = document.getElementById('result-banner');
-  document.getElementById('score-line').textContent = `Score: ${score} / ${total} (${pct}%)`;
-  document.getElementById('score-sub').textContent = unanswered > 0
-    ? `${unanswered} question(s) left unanswered — marked wrong. Scroll down to review each answer (green = correct, red = your incorrect pick).`
-    : `Scroll down to review each answer (green = correct, red = your incorrect pick).`;
-  banner.style.display = 'block';
-  window.scrollTo({top:0, behavior:'smooth'});
-});
-
-updateProgress();
+renderQuestion();
 </script>
 
 </body>
